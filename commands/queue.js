@@ -14,32 +14,33 @@ module.exports = {
       if (isNaN(args[0])) {
         page = 0
       } else {
-        page = args[0] - 1;
+        page = args[0] - 1
       }
-      //11 and -2 because must account for NP song 
-      pages = queue.songs.length <= 11 ? 1 : 1 + Math.trunc((queue.songs.length - 2) / 10);
-      if (page >= pages) page = pages - 1;
+      //11 and -2 because must account for NP song
+      pages = queue.songs.length <= 11 ? 1 : 1 + Math.trunc((queue.songs.length - 2) / 10)
+      if (page >= pages) page = pages - 1
       var q = queue.songs
-        .slice(1 + (page * 10), 1 + ((page + 1) * 10))
-        .map((song, i) => `${(page * 10) + i + 1}. ${song.name} - \`${song.formattedDuration}\``)
-        .join('\n');
+        .slice(1 + page * 10, 1 + (page + 1) * 10)
+        .map((song, i) => `${page * 10 + i + 1}. ${song.name} - \`${song.formattedDuration}\``)
+        .join('\n')
+
+      // total time
+      const sumTime = queue.songs.reduce((accum, curSong) => accum + curSong.duration, 0)
+      const formattedSumTime = `${Math.floor(sumTime / 60)}:${sumTime % 60}`
 
       if (q == '') q = 'Queue is empty'
       const str = `${client.emotes.queue} | **Server Queue**\n${q}`
       const queueEmbed = new Discord.EmbedBuilder()
-        .setColor(0x0099FF)
+        .setColor(0x0099ff)
         .setTitle('Now playing')
         .setDescription(np)
-        .addFields(
-          { name: 'Queue', value: q },
-        )
+        .addFields({ name: `Queue (time left: \`${formattedSumTime}\`)`, value: q })
         // .setTimestamp()
-        .setFooter({ text: `Page: ${page + 1} of ${pages}` });
+        .setFooter({ text: `Page: ${page + 1} of ${pages}` })
 
-      message.channel.send({ embeds: [queueEmbed] });
+      message.channel.send({ embeds: [queueEmbed] })
     } catch (e) {
       message.channel.send(`${client.emotes.error} | ${e}`)
     }
-
   }
 }

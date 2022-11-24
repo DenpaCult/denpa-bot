@@ -49,8 +49,7 @@
   },
   "nano-staged": {
     "*.js": [
-      "prettier --write",
-      "eslint --fix"
+      "prettier --write"
     ],
     "*.{json,yml,yaml,md}": [
       "prettier --write"
