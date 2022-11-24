@@ -25,9 +25,21 @@ module.exports = {
         .map((song, i) => `${page * 10 + i + 1}. ${song.name} - \`${song.formattedDuration}\``)
         .join('\n')
 
-      // total time
+      // calculate total time remaining string
       const sumTime = queue.songs.reduce((accum, curSong) => accum + curSong.duration, 0)
-      const formattedSumTime = `${Math.floor(sumTime / 60)}:${sumTime % 60}`
+
+      let formattedSumTime = ''
+      const hourTime = Math.floor(sumTime / 3600)
+      const minTime = Math.floor(sumTime / 60) % 60
+      const secondTime = sumTime % 60
+      const fillTwo = s => (s > 9 ? s : '0' + s)
+
+      if (hourTime > 0) {
+        formattedSumTime += `${fillTwo(hourTime)}:${fillTwo(minTime)}:`
+      } else if (minTime > 0) {
+        formattedSumTime += `${fillTwo(minTime)}:`
+      }
+      formattedSumTime += `${fillTwo(secondTime)}`
 
       if (q === '') q = 'Queue is empty'
       // const str = `${client.emotes.queue} | **Server Queue**\n${q}`
