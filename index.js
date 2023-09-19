@@ -175,7 +175,7 @@ client.on('messageCreate', async message => {
   }
 })
 
-// auto emotes
+// auto reacts
 client.on('messageCreate', async message => {
   setupAutoReact(message, 'take', client.emotes.take)
   setupAutoReact(message, 'same', client.emotes.same)

@@ -1,6 +1,6 @@
 const createGeneralizedRegex = text => new RegExp(`${text.split('').join('\\W*')}`, 'i')
 
-const setupAutoEmote = (message, text, emote) => {
+const setupAutoReact = (message, text, emote) => {
   if (createGeneralizedRegex(text).test(message.content)) {
     message
       .react(`${emote}`)
@@ -12,5 +12,5 @@ const setupAutoEmote = (message, text, emote) => {
 }
 
 module.exports = {
-  setupAutoEmote
+  setupAutoReact
 }
