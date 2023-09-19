@@ -24,7 +24,7 @@ const { SpotifyPlugin } = require('@distube/spotify')
 const { SoundCloudPlugin } = require('@distube/soundcloud')
 const { YtDlpPlugin } = require('@distube/yt-dlp')
 const Util = require('./classes/utils.js')
-const { setupAutoEmote } = require('./classes/autoEmoteUtils')
+const { setupAutoReact } = require('./classes/autoEmoteUtils')
 
 client.config = require('./config.json')
 const { TOKEN } = process.env
@@ -177,8 +177,8 @@ client.on('messageCreate', async message => {
 
 // auto emotes
 client.on('messageCreate', async message => {
-  setupAutoEmote(message, 'take', client.emotes.take)
-  setupAutoEmote(message, 'same', client.emotes.same)
+  setupAutoReact(message, 'take', client.emotes.take)
+  setupAutoReact(message, 'same', client.emotes.same)
 })
 
 client.distube.setMaxListeners(3)
