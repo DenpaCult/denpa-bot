@@ -24,8 +24,10 @@ const saveDeleteGuardData = (guildId, deleteGuardData) => {
   fs.writeFileSync(getDeleteGuardPath(guildId), JSON.stringify(deleteGuardData))
 }
 
-const addUIDDeleteGuardData = (userId, deleteGuardData) => {
-  deleteGuardData.users.push(userId)
+const addUIDDeleteGuardData = (user, deleteGuardData) => {
+  deleteGuardData.users[user.id] = {
+    latestTag: user.tag
+  }
   return deleteGuardData
 }
 

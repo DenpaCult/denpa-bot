@@ -10,10 +10,8 @@ const Discord = require('discord.js')
 const addDeleteGuard = (user, guildId, message) => {
   let deleteGuardData = getDeleteGuardData(guildId)
 
-  deleteGuardData = addUIDDeleteGuardData(user.id, deleteGuardData)
+  deleteGuardData = addUIDDeleteGuardData(user, deleteGuardData)
   saveDeleteGuardData(guildId, deleteGuardData)
-
-  console.log(deleteGuardData)
 
   message.channel.send(`${user} added successfully.`)
 }
@@ -32,11 +30,12 @@ const removeDeleteGuard = (user, guildId, message) => {
 
 const listDeleteGuard = (user, guildId, message) => {
   const deleteGuardData = getDeleteGuardData(guildId)
-  console.log(deleteGuardData)
 
-  const userIds = deleteGuardData.users
+  const userIds = Object.keys(deleteGuardData.users).map(
+    userId => `${deleteGuardData.users[userId].latestTag} (${userId})`
+  )
 
-  const roleItemsPerPage = 30
+  const roleItemsPerPage = 20
   const msgs = []
   const numPages = Math.ceil(userIds.length / roleItemsPerPage)
 
@@ -67,8 +66,6 @@ module.exports = {
   run: async (client, message, args) => {
     const user = message.mentions.users.size > 0 ? Array.from(message.mentions.users.values())[0] : null
     const guildId = message.guildId
-
-    console.log(message)
 
     const hasPermissions =
       message.member.permissions.has(Discord.PermissionsBitField.Flags.Administrator) ||
