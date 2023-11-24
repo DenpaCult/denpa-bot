@@ -24,7 +24,9 @@ const saveDeleteGuardData = (guildId, deleteGuardData) => {
 }
 
 const addUIDDeleteGuardData = (userId, deleteGuardData) => {
-  deleteGuardData.users.push(userId)
+  if (!isUIDInDeleteGuardData(userId, deleteGuardData)) {
+    deleteGuardData.users.push(userId)
+  }
   return deleteGuardData
 }
 
@@ -33,7 +35,7 @@ const isUIDInDeleteGuardData = (userId, deleteGuardData) => {
 }
 
 const removeUIDInDeleteGuardData = (userId, deleteGuardData) => {
-  deleteGuardData.users.filter(userIdFromUsers => userId !== userIdFromUsers)
+  deleteGuardData.users = deleteGuardData.users.filter(id => userId !== id)
   return deleteGuardData
 }
 
