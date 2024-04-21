@@ -155,12 +155,19 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
       .get(reaction.message.channelId)
       .messages.fetch(reaction.message.id)
 
-    const cringecount = messageReacted.reactions.cache.get(config.emoji.cringe).count
+    const cringeReaction = messageReacted.reactions.cache.get(config.emoji.cringe)
+    const cringecount = cringeReaction.count
 
+    if (messageReacted.author.id === user.id) {
+      // same user can't react
+      reaction.remove()
+      return
+    }
     if (cringeConfig.messages.includes(reaction.message.id)) return // no duplicates in woodboard
     if (reaction.message.channelId === cringeConfig.channelId) return // messages in woodboard don't count
 
-    if (cringecount >= cringeConfig.threshold) {
+    const expired = Date.now() - reaction.message.createdAt().getTime() > 20 * 60 * 1000 // 20 minutes
+    if (cringecount >= cringeConfig.threshold && !expired) {
       client.channels.fetch(cringeConfig.channelId).then(channel => {
         const mainEmbed = new Discord.EmbedBuilder()
           .setColor(0xe8b693) // colour of the sapwood (xylem? idk tree terms)
@@ -204,6 +211,7 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
         cringe.save(cringePath, cringeConfig)
 
         reaction.message.member.timeout(cringeConfig.timeoutTime * 1000)
+        reaction.message.reply(`${reaction.message.author} was muted for this post`)
       })
     }
   }
