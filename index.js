@@ -114,16 +114,18 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
           .setTimestamp()
           .setFooter({ text: `ID: ${reaction.message.id}` })
 
+        const fixedMessageContent = Utils.fixTwitterStr(reaction.message.content)
+
         // value can not be "" or null (presumably can't be falsey)
         // so make sure not to call addFields if there is no message
-        if (reaction.message.content) mainEmbed.addFields({ name: 'Message', value: reaction.message.content })
+        if (fixedMessageContent) mainEmbed.addFields({ name: 'Message', value: fixedMessageContent })
         mainEmbed.addFields({ name: 'Link', value: reaction.message.url })
 
         // TODO: Confirm that URLs are indeed images before sending them off to discord?
 
         // Discord doesn't support displaying more than one (large) image embed at the same time.
         // HOWEVER, see this: https://www.reddit.com/r/discordapp/comments/raz4kl/finally_a_way_to_display_multiple_images_in_an/
-        const hyperlinks = reaction.message.content.match(urlRegex) ?? []
+        const hyperlinks = fixedMessageContent.match(urlRegex) ?? []
         const attachment = reaction.message.attachments.first()
 
         if (hyperlinks.length !== 0) {
@@ -262,9 +264,10 @@ client.on('messageDelete', async message => {
 
     // value can not be "" or null (presumably can't be falsey)
     // so make sure not to call addFields if there is no message
-    mainEmbed.addFields({ name: 'Deleted Message', value: message.content ?? '[Empty]' })
+    const fixedMessageContent = Utils.fixTwitterStr(message.content)
+    mainEmbed.addFields({ name: 'Deleted Message', value: fixedMessageContent ?? '[Empty]' })
 
-    const hyperlinks = message.content.match(urlRegex) ?? []
+    const hyperlinks = fixedMessageContent.match(urlRegex) ?? []
     const attachment = message.attachments.first()
 
     mainEmbed.setImage(attachment?.url ?? hyperlinks.shift() ?? null)
@@ -298,12 +301,14 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
         .setTimestamp()
         .setFooter({ text: `ID: ${oldMessage.id}` })
 
+      const fixedOldMessageContent = Utils.fixTwitterStr(oldMessage.content)
+
       // value can not be "" or null (presumably can't be falsey)
       // so make sure not to call addFields if there is no message
-      mainEmbed.addFields({ name: 'Old Message Content', value: oldMessage.content ?? '[Empty]' })
+      mainEmbed.addFields({ name: 'Old Message Content', value: fixedOldMessageContent ?? '[Empty]' })
       mainEmbed.addFields({ name: 'Link', value: oldMessage.url })
 
-      const hyperlinks = oldMessage.content.match(urlRegex) ?? []
+      const hyperlinks = fixedOldMessageContent.match(urlRegex) ?? []
       const attachment = oldMessage.attachments.first()
 
       mainEmbed.setImage(attachment?.url ?? hyperlinks.shift() ?? null)
