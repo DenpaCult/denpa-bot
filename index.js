@@ -114,7 +114,7 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
           .setTimestamp()
           .setFooter({ text: `ID: ${reaction.message.id}` })
 
-        const fixedMessageContent = Utils.fixTwitterStr(reaction.message.content)
+        const fixedMessageContent = Util.fixTwitterStr(reaction.message.content)
 
         // value can not be "" or null (presumably can't be falsey)
         // so make sure not to call addFields if there is no message
@@ -168,7 +168,7 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
     if (cringeConfig.messages.includes(reaction.message.id)) return // no duplicates in woodboard
     if (reaction.message.channelId === cringeConfig.channelId) return // messages in woodboard don't count
 
-    const expired = Date.now() - reaction.message.createdAt().getTime() > 20 * 60 * 1000 // 20 minutes
+    const expired = Date.now() - reaction.message.createdAt.getTime() > cringeConfig.expireTime * 60 * 1000 // 20 minutes
     if (cringecount >= cringeConfig.threshold && !expired) {
       client.channels.fetch(cringeConfig.channelId).then(channel => {
         const mainEmbed = new Discord.EmbedBuilder()
@@ -264,7 +264,7 @@ client.on('messageDelete', async message => {
 
     // value can not be "" or null (presumably can't be falsey)
     // so make sure not to call addFields if there is no message
-    const fixedMessageContent = Utils.fixTwitterStr(message.content)
+    const fixedMessageContent = Util.fixTwitterStr(message.content)
     mainEmbed.addFields({ name: 'Deleted Message', value: fixedMessageContent ?? '[Empty]' })
 
     const hyperlinks = fixedMessageContent.match(urlRegex) ?? []
@@ -301,7 +301,7 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
         .setTimestamp()
         .setFooter({ text: `ID: ${oldMessage.id}` })
 
-      const fixedOldMessageContent = Utils.fixTwitterStr(oldMessage.content)
+      const fixedOldMessageContent = Util.fixTwitterStr(oldMessage.content)
 
       // value can not be "" or null (presumably can't be falsey)
       // so make sure not to call addFields if there is no message
