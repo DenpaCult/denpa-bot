@@ -206,14 +206,21 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
           embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
         })
 
-        channel.send({ embeds })
+        channel.send({ embeds }).then(newMessage => {
+          const replyEmbed = new Discord.EmbedBuilder()
+            .setTitle(`${reaction.message.author.displayName} was muted for this post`)
+            .setColor(0xe8b693) // colour of the sapwood (xylem? idk tree terms)
+            .setDescription(newMessage.url)
+            .setTimestamp()
+
+          reaction.message.reply({ embeds: [replyEmbed] })
+        })
 
         // Update list of tracked messages + write to disk
         cringeConfig.messages.push(reaction.message.id)
         cringe.save(cringePath, cringeConfig)
 
         reaction.message.member.timeout(cringeConfig.timeoutTime * 1000)
-        reaction.message.reply(`${reaction.message.author} was muted for this post`)
       })
     }
   }
