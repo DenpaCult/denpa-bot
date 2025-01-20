@@ -47,6 +47,7 @@ client.distube = new DisTube(client, {
 client.commands = new Discord.Collection()
 client.aliases = new Discord.Collection()
 client.emotes = config.emoji
+client.history = [] // for ;;history
 
 fs.readdir('./commands/', (err, files) => {
   if (err) return console.log('Could not find any commands!')
@@ -114,19 +115,21 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
           .setTimestamp()
           .setFooter({ text: `ID: ${reaction.message.id}` })
 
-        const fixedMessageContent = Util.fixTwitterStr(reaction.message.content)
+        let apiurls = Util.getTwitterStrApi(reaction.message.content)
 
+		 		if (reaction.message.content)
+		  mainEmbed.addFields({name: 'Message', value: reaction.message.content})
         // value can not be "" or null (presumably can't be falsey)
         // so make sure not to call addFields if there is no message
-        if (fixedMessageContent) mainEmbed.addFields({ name: 'Message', value: fixedMessageContent })
         mainEmbed.addFields({ name: 'Link', value: reaction.message.url })
 
         // TODO: Confirm that URLs are indeed images before sending them off to discord?
 
         // Discord doesn't support displaying more than one (large) image embed at the same time.
         // HOWEVER, see this: https://www.reddit.com/r/discordapp/comments/raz4kl/finally_a_way_to_display_multiple_images_in_an/
-        const hyperlinks = fixedMessageContent.match(urlRegex) ?? []
+        const hyperlinks = reaction.message.content.match(urlRegex) ?? []
         const attachment = reaction.message.attachments.first()
+		const spoiler = attachment?.spoiler || reaction.message.content.match(/||.+||/g) !== null // idk what to do with this information
 
         if (hyperlinks.length !== 0) {
           mainEmbed.setImage(attachment?.url ?? hyperlinks.shift())
@@ -141,7 +144,30 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
           embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
         })
 
-        channel.send({ embeds })
+		if (apiurls && apiurls.length >= 0) {
+   			const fetchPromises = apiurls.map((url) =>
+        		fetch(url)
+            		.then(response => response.json())
+            		.then(body => {
+             			const imgurl = body?.tweet?.media?.photos?.[0]?.url // Thanks lyp
+                		return imgurl
+					})
+        	)
+
+    		Promise.all(fetchPromises).then((imgurls) => {
+        		const validImgurls = imgurls.filter((url) => url)
+
+        		if (validImgurls.length > 0) {
+        	    	mainEmbed.setImage(validImgurls.shift())
+					validImgurls.forEach(_img => embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(_img)))
+					// setting image on main embed resets all others apparently so TODO: make hyperlinks filter out all twitter links
+					// and add them here instead, check if mainembed doesnt have image before setting an image to it by checking its data.image.url
+				}
+         	   	channel.send({ embeds: embeds })
+    		})
+		}
+		else
+          channel.send({ embeds })
 
         // Update list of tracked messages + write to disk
         woodConfig.messages.push(reaction.message.id)
@@ -206,15 +232,47 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
           embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
         })
 
-        channel.send({ embeds }).then(newMessage => {
-          const replyEmbed = new Discord.EmbedBuilder()
-            .setTitle(`${reaction.message.author.displayName} was muted for this post`)
-            .setColor(0xe8b693) // colour of the sapwood (xylem? idk tree terms)
-            .setDescription(newMessage.url)
-            .setTimestamp()
+        let apiurls = Util.getTwitterStrApi(reaction.message.content)
+		if (apiurls && apiurls.length >= 0) {
+   			const fetchPromises = apiurls.map((url) =>
+        		fetch(url)
+            		.then(response => response.json())
+            		.then(body => {
+             			const imgurl = body?.tweet?.media?.photos?.[0]?.url // Thanks lyp
+                		return imgurl
+					})
+        	)
 
-          reaction.message.reply({ embeds: [replyEmbed] })
-        })
+    		Promise.all(fetchPromises).then((imgurls) => {
+        		const validImgurls = imgurls.filter((url) => url)
+
+        		if (validImgurls.length > 0) {
+        	    	mainEmbed.setImage(validImgurls.shift())
+					validImgurls.forEach(_img => embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(_img)))
+					// setting image on main embed resets all others apparently so TODO: make hyperlinks filter out all twitter links
+					// and add them here instead, check if mainembed doesnt have image before setting an image to it by checking its data.image.url
+				}
+         	   	channel.send({ embeds }).then(newMessage => {
+                  const replyEmbed = new Discord.EmbedBuilder()
+                    .setTitle(`${reaction.message.author.displayName} was muted for this post`)
+                    .setColor(0xe8b693) // colour of the sapwood (xylem? idk tree terms)
+                    .setDescription(newMessage.url)
+                    .setTimestamp()
+
+                  reaction.message.reply({ embeds: [replyEmbed] })
+                }) // sorry for copy pasting :P
+    		})
+		}
+		else
+          channel.send({ embeds }).then(newMessage => {
+            const replyEmbed = new Discord.EmbedBuilder()
+              .setTitle(`${reaction.message.author.displayName} was muted for this post`)
+              .setColor(0xe8b693) // colour of the sapwood (xylem? idk tree terms)
+              .setDescription(newMessage.url)
+              .setTimestamp()
+
+            reaction.message.reply({ embeds: [replyEmbed] })
+          })
 
         // Update list of tracked messages + write to disk
         cringeConfig.messages.push(reaction.message.id)
@@ -342,6 +400,11 @@ client.distube
     const np = `${client.emotes.play} | \`${song.name}\` - \`${song.formattedDuration}\`\n
     Requested by: \`${requester}\` ${isQueueRestored ? '**[RESTORED]**' : ''}\n
     <${song.url}>`
+    while (client.history.length > 9) {
+      client.history.shift()
+    }
+    client.history.push(song.name) // push the song to history for ;;history change this to change the ;;hist args, ex. add requester
+
     const queueEmbed = new Discord.EmbedBuilder()
       .setColor(0x0099ff)
       .setTitle('Playing')
@@ -378,7 +441,7 @@ client.distube
   .on('finish', queue => queue.textChannel.send('Finished!'))
 
 class DenpartyTracker {
-  constructor () {
+  constructor() {
     this.playlists = new Map()
     this.markers = new Map()
     this.disabledAt = new Set()
@@ -407,12 +470,12 @@ class DenpartyTracker {
     })
   }
 
-  getMessageById (guildId, messageId) {
+  getMessageById(guildId, messageId) {
     const target = (this.playlists.get(guildId) ?? []).filter(datum => datum.messageId === messageId)
     return target[0] ?? null
   }
 
-  getOrInsertMarker (guildId) {
+  getOrInsertMarker(guildId) {
     if (!this.markers.get(guildId)) {
       // If we at least have _one_ record, then use that timestamp
       const playlist = this.getOrGeneratePlaylistId(guildId)
@@ -425,7 +488,7 @@ class DenpartyTracker {
     return this.markers.get(guildId)
   }
 
-  setMarker (guildId, messageId) {
+  setMarker(guildId, messageId) {
     const target = this.getMessageById(guildId, messageId)
     if (!target) {
       throw new Error('Incorrect message ID or guild ID')
@@ -434,14 +497,14 @@ class DenpartyTracker {
     return target.timestamp
   }
 
-  getOrGeneratePlaylistId (guildId) {
+  getOrGeneratePlaylistId(guildId) {
     if (!this.playlists.get(guildId)) {
       this.playlists.set(guildId, [])
     }
     return this.playlists.get(guildId)
   }
 
-  getRecord (song) {
+  getRecord(song) {
     const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
     const currentDenpartyMarker = this.getOrInsertMarker(song.metadata.guildId)
     const result = target.filter(sng => sng.video_id === song.id && sng.timestamp >= currentDenpartyMarker)
@@ -449,7 +512,7 @@ class DenpartyTracker {
     return result[0] ?? null
   }
 
-  onSongPlayed (song) {
+  onSongPlayed(song) {
     if (this.disabledAt.has(song.metadata.guildId)) {
       return
     }
@@ -469,11 +532,11 @@ class DenpartyTracker {
     this.dumpStateFull(song.metadata.guildId)
   }
 
-  getDenpartyLength (guildId) {
+  getDenpartyLength(guildId) {
     return this.getOrGeneratePlaylistId(guildId).length
   }
 
-  record (song) {
+  record(song) {
     if (this.disabledAt.has(song.metadata.guildId)) {
       return
     }
@@ -498,7 +561,7 @@ class DenpartyTracker {
     return datum
   }
 
-  recordPlaylist (playlist) {
+  recordPlaylist(playlist) {
     if (playlist.songs.length < 1) return
 
     const guildId = playlist.songs[0].metadata.guildId
@@ -523,7 +586,7 @@ class DenpartyTracker {
     this.dumpStateFull(guildId)
   }
 
-  filterDuplicates (guildId) {
+  filterDuplicates(guildId) {
     const target = this.getOrGeneratePlaylistId(guildId)
     const currDenpartyMarker = this.getOrInsertMarker(guildId)
     const denpartySongs = target.filter(datum => datum.timestamp >= currDenpartyMarker)
@@ -536,7 +599,7 @@ class DenpartyTracker {
     this.playlists.set(guildId, [...prevDenpartySongs, ...dupelessDenpartySong])
   }
 
-  dumpStateFull (guildId) {
+  dumpStateFull(guildId) {
     const target = {
       marker: this.getOrInsertMarker(guildId),
       playlist: this.getOrGeneratePlaylistId(guildId)
@@ -554,7 +617,7 @@ class DenpartyTracker {
     fs.writeFileSync(`./backups/denparty_${guildId}.json`, data, { encoding: 'utf-8' })
   }
 
-  async dumpStatePartial (guildId) {
+  async dumpStatePartial(guildId) {
     const fullTarget = this.getOrGeneratePlaylistId(guildId)
     const marker = this.getOrInsertMarker(guildId)
 
@@ -569,7 +632,7 @@ class DenpartyTracker {
     await fhandle.close()
   }
 
-  async whileDisabledContext (guildId, code) {
+  async whileDisabledContext(guildId, code) {
     this.disabledAt.add(guildId)
     await code()
     this.disabledAt.delete(guildId)
@@ -577,7 +640,7 @@ class DenpartyTracker {
 }
 const denpartyTracker = new DenpartyTracker()
 
-async function backupQueue (guildId) {
+async function backupQueue(guildId) {
   const queue = client.distube.getQueue(guildId)
   if (!queue) {
     return
@@ -594,7 +657,7 @@ async function backupQueue (guildId) {
   fs.writeFileSync(`./backups/queue_${guildId}.json`, data, { encoding: 'utf-8' })
 }
 
-async function loadQueueBackup (guildId) {
+async function loadQueueBackup(guildId) {
   try {
     const fhandle = await fsPromises.open(`./backups/queue_${guildId}.json`, 'r')
     const data = await fhandle.readFile('utf-8')
