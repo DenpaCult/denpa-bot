@@ -9,7 +9,7 @@ module.exports = {
     }
     const time = Number(args[0])
     if (isNaN(time)) return message.channel.send(`${client.emotes.error} | Please enter a valid number!`)
-    queue.seek((queue.currentTime - time))
+    queue.seek(queue.currentTime - time)
     message.channel.send(`Rewinded the song for ${time}!`)
   }
 }
