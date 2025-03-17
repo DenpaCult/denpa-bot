@@ -12,6 +12,8 @@ const getCringeConfig = path => {
 
   // An older ver. of wood.json didn't have a message property, so ensure that it exists
   if (cringeConfig.messages === undefined) cringeConfig.messages = []
+  // doing the same thing for expireTime
+  if (cringeConfig.expireTime === undefined) cringeConfig.expireTime = 20
 
   return cringeConfig
 }

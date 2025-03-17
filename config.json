@@ -28,6 +28,7 @@
   "defaultCringeConfig": {
     "threshold": 1,
     "timeoutTime": 10,
+    "expireTime": 20,
     "channelId": "channel_id",
     "messages": []
   }
