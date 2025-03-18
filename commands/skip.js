@@ -1,5 +1,3 @@
-/* eslint no-unreachable: off */
-
 module.exports = {
   name: 'skip',
   aliases: ['s'],
@@ -8,12 +6,9 @@ module.exports = {
     const queue = client.distube.getQueue(message)
     if (!queue) return message.channel.send(`${client.emotes.error} | There is nothing in the queue right now!`)
 
-    // FIXME: remove lint, remove early return and fix ;;skip
-    return message.channel.send(`${client.emotes.error} | this command is disabled. try \`;;seek 99999\` instead.`)
-
     const arg = args.join()
     try {
-      if (isNaN(arg) || args === '') {
+      if (isNaN(arg) || arg === '') {
         if (arg.includes('-')) {
           // SKIP BY RANGE
           const argsRange = arg.split('-')
