@@ -187,7 +187,7 @@ client.on(Discord.Events.MessageReactionAdd, async (reaction, user) => {
 
     if (messageReacted.author.id === user.id) {
       // same user can't react
-      reaction.remove()
+      reaction.users.remove(user.id)
       return
     }
     if (cringeConfig.messages.includes(reaction.message.id)) return // no duplicates in woodboard
@@ -330,23 +330,52 @@ client.on('messageDelete', async message => {
 
     // value can not be "" or null (presumably can't be falsey)
     // so make sure not to call addFields if there is no message
-    const fixedMessageContent = Util.fixTwitterStr(message.content)
-    mainEmbed.addFields({ name: 'Deleted Message', value: fixedMessageContent ?? '[Empty]' })
+    const apiurls = Util.getTwitterStrApi(message.content)
+    if (apiurls && apiurls.length >= 0) {
+      const fetchPromises = apiurls.map(url =>
+        fetch(url)
+          .then(response => response.json())
+          .then(body => {
+            const imgurl = body?.tweet?.media?.photos?.[0]?.url // Thanks lyp
+            return imgurl
+          })
+      )
 
-    const hyperlinks = fixedMessageContent.match(urlRegex) ?? []
-    const attachment = message.attachments.first()
+      const embeds = []
+      Promise.all(fetchPromises).then(imgurls => {
+        const validImgurls = imgurls.filter(url => url)
 
-    mainEmbed.setImage(attachment?.url ?? hyperlinks.shift() ?? null)
+        if (validImgurls.length > 0) {
+          mainEmbed.setImage(validImgurls.shift())
+          validImgurls.forEach(_img =>
+            embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(_img))
+          )
+          // setting image on main embed resets all others apparently so TODO: make hyperlinks filter out all twitter links
+          // and add them here instead, check if mainembed doesnt have image before setting an image to it by checking its data.image.url
+        }
+        mainEmbed.addFields({ name: 'Deleted Message', value: message.content ?? '[Empty]' })
 
-    const embeds = []
-    embeds.push(mainEmbed)
+        embeds.push(mainEmbed)
+        message.channel.send({ embeds })
+      })
+    } else {
+      mainEmbed.addFields({ name: 'Deleted Message', value: message.content ?? '[Empty]' })
 
-    // https://www.reddit.com/r/discordapp/comments/raz4kl/finally_a_way_to_display_multiple_images_in_an/
-    hyperlinks.forEach(hyperlink => {
-      embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
-    })
+      const hyperlinks = message.content.match(urlRegex) ?? []
+      const attachment = message.attachments.first()
 
-    message.channel.send({ embeds })
+      mainEmbed.setImage(attachment?.url ?? hyperlinks.shift() ?? null)
+
+      const embeds = []
+      embeds.push(mainEmbed)
+
+      // https://www.reddit.com/r/discordapp/comments/raz4kl/finally_a_way_to_display_multiple_images_in_an/
+      hyperlinks.forEach(hyperlink => {
+        embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
+      })
+
+      message.channel.send({ embeds })
+    }
   }
 })
 
@@ -367,27 +396,57 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
         .setTimestamp()
         .setFooter({ text: `ID: ${oldMessage.id}` })
 
-      const fixedOldMessageContent = Util.fixTwitterStr(oldMessage.content)
+      const apiurls = Util.getTwitterStrApi(oldMessage.content)
 
-      // value can not be "" or null (presumably can't be falsey)
-      // so make sure not to call addFields if there is no message
-      mainEmbed.addFields({ name: 'Old Message Content', value: fixedOldMessageContent ?? '[Empty]' })
-      mainEmbed.addFields({ name: 'Link', value: oldMessage.url })
+      if (apiurls && apiurls.length >= 0) {
+        const fetchPromises = apiurls.map(url =>
+          fetch(url)
+            .then(response => response.json())
+            .then(body => {
+              const imgurl = body?.tweet?.media?.photos?.[0]?.url // Thanks lyp
+              return imgurl
+            })
+        )
 
-      const hyperlinks = fixedOldMessageContent.match(urlRegex) ?? []
-      const attachment = oldMessage.attachments.first()
+        const embeds = []
+        Promise.all(fetchPromises).then(imgurls => {
+          const validImgurls = imgurls.filter(url => url)
 
-      mainEmbed.setImage(attachment?.url ?? hyperlinks.shift() ?? null)
+          if (validImgurls.length > 0) {
+            mainEmbed.setImage(validImgurls.shift())
+            validImgurls.forEach(_img =>
+              embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(_img))
+            )
+            // setting image on main embed resets all others apparently so TODO: make hyperlinks filter out all twitter links
+            // and add them here instead, check if mainembed doesnt have image before setting an image to it by checking its data.image.url
+          }
+          mainEmbed.addFields({ name: 'Old Message Content', value: oldMessage.content ?? '[Empty]' })
+          mainEmbed.addFields({ name: 'Link', value: oldMessage.url })
 
-      const embeds = []
-      embeds.push(mainEmbed)
+          embeds.push(mainEmbed)
+          channel.send({ embeds })
+        })
+      } else {
+        // value can not be "" or null (presumably can't be falsey)
+        // so make sure not to call addFields if there is no message
+        mainEmbed.addFields({ name: 'Old Message Content', value: oldMessage.content ?? '[Empty]' })
+        mainEmbed.addFields({ name: 'Link', value: oldMessage.url })
 
-      // https://www.reddit.com/r/discordapp/comments/raz4kl/finally_a_way_to_display_multiple_images_in_an/
-      hyperlinks.forEach(hyperlink => {
-        embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
-      })
+        const hyperlinks = oldMessage.content.match(urlRegex) ?? []
+        const attachment = oldMessage.attachments.first()
 
-      channel.send({ embeds })
+        mainEmbed.setImage(attachment?.url ?? hyperlinks.shift() ?? null)
+
+        const embeds = []
+        embeds.push(mainEmbed)
+
+        // https://www.reddit.com/r/discordapp/comments/raz4kl/finally_a_way_to_display_multiple_images_in_an/
+        hyperlinks.forEach(hyperlink => {
+          embeds.push(new Discord.EmbedBuilder().setURL('https://example.com').setImage(hyperlink))
+        })
+
+        channel.send({ embeds })
+      }
     })
   }
 })
