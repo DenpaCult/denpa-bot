@@ -840,4 +840,21 @@ client.distube
     }
   })
 
+// + hoogmeh koko role change approved by thea (every 10 minuts)
+client.on(Discord.Events.GuildAvailable, async guild => {
+  if (config.kokorole === '' || config.kokorole === undefined) return
+
+  if (guild.id === config.guild_id) {
+    const kokorole = await guild.roles.fetch(config.kokorole)
+
+    setInterval(() => {
+      kokorole.setColor([
+        Math.floor(Math.random() * 255),
+        Math.floor(Math.random() * 255),
+        Math.floor(Math.random() * 255)
+      ])
+    }, 1000 * 60 * 10)
+  }
+})
+
 client.login(config.token)
