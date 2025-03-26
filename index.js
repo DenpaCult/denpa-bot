@@ -852,10 +852,10 @@ client.on(Discord.Events.GuildAvailable, async guild => {
   }
 		
   if (guild.id === config.guild_id) {
-	  if (kokorole === null)
-		kokorole = await guild.roles.fetch(config.kokorole)
+    if (kokorole === null)
+	  kokorole = await guild.roles.fetch(config.kokorole)
 
-      setInterval(() => {
+	setInterval(() => {
       kokorole.setColor([
         Math.floor(Math.random() * 255),
         Math.floor(Math.random() * 255),
