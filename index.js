@@ -844,16 +844,18 @@ client.distube
 client.on(Discord.Events.GuildAvailable, async guild => {
   let kokorole = null
   if (config.kokorole === '' || config.kokorole === undefined) {
-    if (guild.id === '856649672117583872') // temp fix until the config gets updated :pout:
+    if (guild.id === '856649672117583872') { // temp fix until the config gets updated :pout:
       kokorole = await guild.roles.fetch('8566698001005711401')
-	else {
-	  return
+    }
+    else {
+      return
 	}
   }
-		
+
   if (guild.id === config.guild_id) {
-    if (kokorole === null)
+    if (kokorole === null) {
 	  kokorole = await guild.roles.fetch(config.kokorole)
+    }
 
 	setInterval(() => {
       kokorole.setColor([
