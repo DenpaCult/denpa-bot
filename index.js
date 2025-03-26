@@ -501,7 +501,7 @@ client.distube
   .on('finish', queue => queue.textChannel.send('Finished!'))
 
 class DenpartyTracker {
-  constructor () {
+  constructor() {
     this.playlists = new Map()
     this.markers = new Map()
     this.disabledAt = new Set()
@@ -530,12 +530,12 @@ class DenpartyTracker {
     })
   }
 
-  getMessageById (guildId, messageId) {
+  getMessageById(guildId, messageId) {
     const target = (this.playlists.get(guildId) ?? []).filter(datum => datum.messageId === messageId)
     return target[0] ?? null
   }
 
-  getOrInsertMarker (guildId) {
+  getOrInsertMarker(guildId) {
     if (!this.markers.get(guildId)) {
       // If we at least have _one_ record, then use that timestamp
       const playlist = this.getOrGeneratePlaylistId(guildId)
@@ -548,7 +548,7 @@ class DenpartyTracker {
     return this.markers.get(guildId)
   }
 
-  setMarker (guildId, messageId) {
+  setMarker(guildId, messageId) {
     const target = this.getMessageById(guildId, messageId)
     if (!target) {
       throw new Error('Incorrect message ID or guild ID')
@@ -557,14 +557,14 @@ class DenpartyTracker {
     return target.timestamp
   }
 
-  getOrGeneratePlaylistId (guildId) {
+  getOrGeneratePlaylistId(guildId) {
     if (!this.playlists.get(guildId)) {
       this.playlists.set(guildId, [])
     }
     return this.playlists.get(guildId)
   }
 
-  getRecord (song) {
+  getRecord(song) {
     const target = this.getOrGeneratePlaylistId(song.metadata.guildId)
     const currentDenpartyMarker = this.getOrInsertMarker(song.metadata.guildId)
     const result = target.filter(sng => sng.video_id === song.id && sng.timestamp >= currentDenpartyMarker)
@@ -572,7 +572,7 @@ class DenpartyTracker {
     return result[0] ?? null
   }
 
-  onSongPlayed (song) {
+  onSongPlayed(song) {
     if (this.disabledAt.has(song.metadata.guildId)) {
       return
     }
@@ -592,11 +592,11 @@ class DenpartyTracker {
     this.dumpStateFull(song.metadata.guildId)
   }
 
-  getDenpartyLength (guildId) {
+  getDenpartyLength(guildId) {
     return this.getOrGeneratePlaylistId(guildId).length
   }
 
-  record (song) {
+  record(song) {
     if (this.disabledAt.has(song.metadata.guildId)) {
       return
     }
@@ -621,7 +621,7 @@ class DenpartyTracker {
     return datum
   }
 
-  recordPlaylist (playlist) {
+  recordPlaylist(playlist) {
     if (playlist.songs.length < 1) return
 
     const guildId = playlist.songs[0].metadata.guildId
@@ -646,7 +646,7 @@ class DenpartyTracker {
     this.dumpStateFull(guildId)
   }
 
-  filterDuplicates (guildId) {
+  filterDuplicates(guildId) {
     const target = this.getOrGeneratePlaylistId(guildId)
     const currDenpartyMarker = this.getOrInsertMarker(guildId)
     const denpartySongs = target.filter(datum => datum.timestamp >= currDenpartyMarker)
@@ -659,7 +659,7 @@ class DenpartyTracker {
     this.playlists.set(guildId, [...prevDenpartySongs, ...dupelessDenpartySong])
   }
 
-  dumpStateFull (guildId) {
+  dumpStateFull(guildId) {
     const target = {
       marker: this.getOrInsertMarker(guildId),
       playlist: this.getOrGeneratePlaylistId(guildId)
@@ -677,7 +677,7 @@ class DenpartyTracker {
     fs.writeFileSync(`./backups/denparty_${guildId}.json`, data, { encoding: 'utf-8' })
   }
 
-  async dumpStatePartial (guildId) {
+  async dumpStatePartial(guildId) {
     const fullTarget = this.getOrGeneratePlaylistId(guildId)
     const marker = this.getOrInsertMarker(guildId)
 
@@ -692,7 +692,7 @@ class DenpartyTracker {
     await fhandle.close()
   }
 
-  async whileDisabledContext (guildId, code) {
+  async whileDisabledContext(guildId, code) {
     this.disabledAt.add(guildId)
     await code()
     this.disabledAt.delete(guildId)
@@ -700,7 +700,7 @@ class DenpartyTracker {
 }
 const denpartyTracker = new DenpartyTracker()
 
-async function backupQueue (guildId) {
+async function backupQueue(guildId) {
   const queue = client.distube.getQueue(guildId)
   if (!queue) {
     return
@@ -717,7 +717,7 @@ async function backupQueue (guildId) {
   fs.writeFileSync(`./backups/queue_${guildId}.json`, data, { encoding: 'utf-8' })
 }
 
-async function loadQueueBackup (guildId) {
+async function loadQueueBackup(guildId) {
   try {
     const fhandle = await fsPromises.open(`./backups/queue_${guildId}.json`, 'r')
     const data = await fhandle.readFile('utf-8')
@@ -845,7 +845,7 @@ client.on(Discord.Events.GuildAvailable, async guild => {
   let kokorole = null
   if (config.kokorole === '' || config.kokorole === undefined) {
     if (guild.id === '856649672117583872') {
-	  // temp fix until the config gets updated :pout:
+      // temp fix until the config gets updated :pout:
       kokorole = await guild.roles.fetch('8566698001005711401')
     }
     else {
