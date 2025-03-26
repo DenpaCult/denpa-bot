@@ -849,8 +849,6 @@ client.on(Discord.Events.GuildAvailable, async guild => {
 		else
 			kokorole = await guild.roles.fetch(config.kokorole)
 	}
-	else
-		return
 		
   if (guild.id === config.guild_id) {
       setInterval(() => {
