@@ -846,24 +846,22 @@ client.on(Discord.Events.GuildAvailable, async guild => {
   const logchan = await guild.channels.fetch('856758819936796692')
   logchan.send('torom is online')
 
-  if (guild.id === config.guild_id) {
-    if (kokorole === null) {
-      kokorole = await guild.roles.fetch(config.kokorole)
-    }
-
-    setInterval(() => {
-      try {
-        kokorole.setColor([
-          Math.floor(Math.random() * 255),
-          Math.floor(Math.random() * 255),
-          Math.floor(Math.random() * 255)
-        ])
-        logchan.send('kokorolechanged')
-      } catch (e) {
-        logchan.send(e)
-      }
-    }, 1000 * 60 * 10)
+  if (kokorole === null) {
+    kokorole = await guild.roles.fetch(config.kokorole)
   }
+
+  setInterval(() => {
+    try {
+      kokorole.setColor([
+        Math.floor(Math.random() * 255),
+        Math.floor(Math.random() * 255),
+        Math.floor(Math.random() * 255)
+      ])
+      logchan.send('kokorolechanged')
+    } catch (e) {
+      logchan.send(e)
+    }
+  }, 1000 * 60 * 10)
 })
 
 client.login(config.token)
