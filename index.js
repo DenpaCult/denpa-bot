@@ -842,18 +842,9 @@ client.distube
 
 // + hoogmeh koko role change approved by thea (every 10 minuts)
 client.on(Discord.Events.GuildAvailable, async guild => {
-  let kokorole = null
-  let logchan = null
-  if (config.kokorole === '' || config.kokorole === undefined) {
-    if (guild.id === '856649672117583872') {
-      // temp fix until the config gets updated :pout:
-      kokorole = await guild.roles.fetch('856669801005711401')
-      logchan = await guild.channels.fetch('856758819936796692')
-      logchan.send('torom is online')
-    } else {
-      return
-    }
-  }
+  let kokorole = await guild.roles.fetch('856669801005711401')
+  const logchan = await guild.channels.fetch('856758819936796692')
+  logchan.send('torom is online')
 
   if (guild.id === config.guild_id) {
     if (kokorole === null) {
