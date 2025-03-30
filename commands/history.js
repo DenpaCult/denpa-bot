@@ -5,7 +5,7 @@ module.exports = {
   aliases: ['hist'],
   run: async (client, message) => {
     if (client.history.length < 1) {
-      message.channel.send('emty!!')
+      message.channel.send('emty!!!')
       return
     }
     let i = 0
