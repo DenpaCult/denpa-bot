@@ -846,7 +846,7 @@ client.on(Discord.Events.GuildAvailable, async guild => {
   const logchan = await guild.channels.fetch('856758819936796692')
   logchan.send('torom is online')
 
-  if (kokorole === null) {
+  if (kokorole === null && config.kokorole !== undefined) {
     kokorole = await guild.roles.fetch(config.kokorole)
   }
   try {
