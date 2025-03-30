@@ -851,16 +851,13 @@ client.on(Discord.Events.GuildAvailable, async guild => {
   }
 
   setInterval(() => {
-    try {
-      kokorole.setColor([
-        Math.floor(Math.random() * 255),
-        Math.floor(Math.random() * 255),
-        Math.floor(Math.random() * 255)
-      ])
-      logchan.send('kokorolechanged')
-    } catch (e) {
-      logchan.send(e)
-    }
+    logchan.send('changing koko role')
+    kokorole.setColor([
+      Math.floor(Math.random() * 255),
+      Math.floor(Math.random() * 255),
+      Math.floor(Math.random() * 255)
+    ])
+    logchan.send('kokorolechanged')
   }, 1000 * 60 * 10)
 })
 
