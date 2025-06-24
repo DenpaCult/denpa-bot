@@ -840,21 +840,31 @@ client.distube
     }
   })
 
-// + hoogmeh koko role change approved by thea (every 10 minuts)
-// client.on(Discord.Events.GuildAvailable, async guild => {
-// const kokorole = await guild.roles.fetch('856669801005711401')
-//  const logchan = await guild.channels.fetch('1090086858635096086')
-//  logchan.send('torom is online')
+let hue = 0
 
-// setInterval(() => {
-//   logchan.send('changing kok  o role')
-//   kokorole.setColor([
-//     Math.floor(Math.random()   * 255),
-//     Math.floor(Math.random()   * 255),
-//     Math.floor(Math.random()   * 255)
-//   ])
-//   logchan.send('kokorolechanged')
-// }, 1000 * 60 * 10)
-// })
+// + hoogmeh koko role change approved by thea (every 10 minuts)
+client.on(Discord.Events.GuildAvailable, async guild => {
+  const koko = guild.roles.cache.find(r => r.name === config.kokorole)
+  if (!koko) throw new Error(`failed to find koko role with name '${config.kokorole}'`)
+
+  const increment = 360 / 13 // cycle takes just over 2 hours, slight drift in colours over time
+
+  setInterval(async () => {
+    const [r, g, b] = hsvToRgb(hue, 1, 1)
+    hue = (hue + increment) % 360
+
+    await koko.edit({ color: rgbToHex(r, g, b) })
+  }, 1000 * 60 * 10)
+})
+
+// https://stackoverflow.com/a/54024653/
+function hsvToRgb (h, s, v) {
+  const f = (n, k = (n + h / 60) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0)
+  return [f(5) * 255, f(3) * 255, f(1) * 255] // kajo: convert to uint8_t range here
+}
+
+function rgbToHex (r, g, b) {
+  return (r << 16) | (g << 8) | b
+}
 
 client.login(config.token)
