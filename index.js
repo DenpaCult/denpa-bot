@@ -844,8 +844,8 @@ let hue = 0
 
 // + hoogmeh koko role change approved by thea (every 10 minuts)
 client.on(Discord.Events.GuildAvailable, async guild => {
-  const koko = guild.roles.cache.find(r => r.name === config.kokorole)
-  if (!koko) throw new Error(`failed to find koko role with name '${config.kokorole}'`)
+  const koko = guild.roles.cache.get(config.kokorole)
+  if (!koko) throw new Error(`failed to find koko role with ID '${config.kokorole}'`)
 
   const increment = 360 / 13 // cycle takes just over 2 hours, slight drift in colours over time
 
