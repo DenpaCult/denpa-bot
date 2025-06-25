@@ -840,20 +840,14 @@ client.distube
     }
   })
 
-let hue = 0
-
-// + hoogmeh koko role change approved by thea (every 10 minuts)
+// + hoogmeh koko role change approved by thea (every 10 minutes)
 client.on(Discord.Events.GuildAvailable, async guild => {
   const koko = guild.roles.cache.get(config.kokorole)
   if (!koko) return console.error(`failed to find koko role with ID ${config.kokorole}`)
 
-  const increment = 360 / 13 // cycle takes just over 2 hours, slight drift in colours over time
-
   setInterval(async () => {
-    const [r, g, b] = hsvToRgb(hue, normal(), 1)
-    hue = (hue + increment) % 360
-
-    await koko.edit({ color: rgbToHex(r, g, b) })
+    const [r, g, b] = hsvToRgb(Math.random() * 360, normal(), 1)
+    await koko.edit({ color: (r << 16) | (g << 8) | b })
   }, 1000 * 60 * 10)
 })
 
@@ -861,10 +855,6 @@ client.on(Discord.Events.GuildAvailable, async guild => {
 function hsvToRgb (h, s, v) {
   const f = (n, k = (n + h / 60) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0)
   return [f(5) * 255, f(3) * 255, f(1) * 255] // kajo: convert to uint8_t range here
-}
-
-function rgbToHex (r, g, b) {
-  return (r << 16) | (g << 8) | b
 }
 
 // central limit theorem, clamping bad but who cares
