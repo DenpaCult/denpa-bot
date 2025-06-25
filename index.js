@@ -845,13 +845,12 @@ let hue = 0
 // + hoogmeh koko role change approved by thea (every 10 minuts)
 client.on(Discord.Events.GuildAvailable, async guild => {
   const koko = guild.roles.cache.get(config.kokorole)
-  // if (!koko) throw new Error(`failed to find koko role with ID '${config.kokorole}'`)
-  if (!koko) return // TODO: figure out ways to debug with tea
+  if (!koko) return console.error(`failed to find koko role with ID ${config.kokorole}`)
 
   const increment = 360 / 13 // cycle takes just over 2 hours, slight drift in colours over time
 
   setInterval(async () => {
-    const [r, g, b] = hsvToRgb(hue, 1, 1)
+    const [r, g, b] = hsvToRgb(hue, normal(), 1)
     hue = (hue + increment) % 360
 
     await koko.edit({ color: rgbToHex(r, g, b) })
@@ -866,6 +865,14 @@ function hsvToRgb (h, s, v) {
 
 function rgbToHex (r, g, b) {
   return (r << 16) | (g << 8) | b
+}
+
+// central limit theorem (real basic lol)
+function normal () {
+  let sum = 0
+  for (let i = 0; i < 6; i++) sum += Math.random()
+
+  return sum / 6
 }
 
 client.login(config.token)
