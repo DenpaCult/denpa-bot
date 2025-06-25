@@ -840,21 +840,31 @@ client.distube
     }
   })
 
-// + hoogmeh koko role change approved by thea (every 10 minuts)
-// client.on(Discord.Events.GuildAvailable, async guild => {
-// const kokorole = await guild.roles.fetch('856669801005711401')
-//  const logchan = await guild.channels.fetch('1090086858635096086')
-//  logchan.send('torom is online')
+// + hoogmeh koko role change approved by thea (every 10 minutes)
+client.on(Discord.Events.GuildAvailable, async guild => {
+  const koko = guild.roles.cache.get(config.kokorole)
+  if (!koko) return console.error(`failed to find koko role with ID ${config.kokorole}`)
 
-// setInterval(() => {
-//   logchan.send('changing kok  o role')
-//   kokorole.setColor([
-//     Math.floor(Math.random()   * 255),
-//     Math.floor(Math.random()   * 255),
-//     Math.floor(Math.random()   * 255)
-//   ])
-//   logchan.send('kokorolechanged')
-// }, 1000 * 60 * 10)
-// })
+  setInterval(async () => {
+    const [r, g, b] = hsvToRgb(Math.random() * 360, normal(), 1)
+    await koko.edit({ color: (r << 16) | (g << 8) | b })
+  }, 1000 * 60 * 10)
+})
+
+// https://stackoverflow.com/a/54024653/
+function hsvToRgb (h, s, v) {
+  const f = (n, k = (n + h / 60) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0)
+  return [f(5) * 255, f(3) * 255, f(1) * 255] // kajo: convert to uint8_t range here
+}
+
+// central limit theorem, clamping bad but who cares
+function normal (peak = 0.5) {
+  const samples = 6
+
+  let sum = 0
+  for (let i = 0; i < samples; i++) sum += Math.random()
+
+  return Math.max(0, Math.min(1, sum / samples - 0.5 + peak))
+}
 
 client.login(config.token)
