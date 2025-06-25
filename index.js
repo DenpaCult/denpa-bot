@@ -867,12 +867,14 @@ function rgbToHex (r, g, b) {
   return (r << 16) | (g << 8) | b
 }
 
-// central limit theorem (real basic lol)
-function normal () {
-  let sum = 0
-  for (let i = 0; i < 6; i++) sum += Math.random()
+// central limit theorem, clamping bad but who cares
+function normal (peak = 0.5) {
+  const samples = 6
 
-  return sum / 6
+  let sum = 0
+  for (let i = 0; i < samples; i++) sum += Math.random()
+
+  return Math.max(0, Math.min(1, sum / samples - 0.5 + peak))
 }
 
 client.login(config.token)
