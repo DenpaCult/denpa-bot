@@ -11,11 +11,12 @@ const client = new Discord.Client({
     Discord.IntentsBitField.Flags.GuildPresences,
     Discord.IntentsBitField.Flags.GuildMembers,
     Discord.GatewayIntentBits.GuildMessageReactions
+  ],
+  partials: [
+    Discord.Partials.Message
+    // Partials.Channel,
+    // Partials.Reaction,
   ]
-  // partials: [
-  //   Partials.Message,
-  //   Partials.Channel,
-  //   Partials.Reaction]
 })
 const fs = require('fs')
 const fsPromises = require('fs/promises')
