@@ -122,19 +122,34 @@ function handleQuotes (args) {
 
   for (let i = 0; i < args.length; i++) {
     const str = args[i]
-    const start = str[0]
 
-    if (!["'", '"'].includes(start)) {
+    if (!containsQuote(str)) {
       tokens.push(str)
       continue
     }
 
-    const end = args.slice(i + 1).findIndex(end => str[0] === end[end.length - 1]) // index of next matching quote
-    const merged = args.slice(i, end + 2).join(' ') // NB: quotes are still present
-    tokens.push(merged.slice(1, merged.length - 1)) // remove quotes
+    const remaining = args.slice(i + 1)
+    const end = remaining.findIndex(s => str[0] === s[s.length - 1])
 
-    i = end + 1 // skip to end of quoted str
+    const merged = args.slice(i, i + 1 + end + 1).join(' ')
+    tokens.push(merged.slice(1, merged.length - 1))
+
+    i = i + 1 + end // skip to next word after endquote
   }
 
+  console.debug('args', args)
+  console.debug('tokens', tokens)
+
   return tokens
+}
+
+/**
+ * @param {string} text
+ * @returns boolean
+ */
+function containsQuote (text) {
+  const start = text[0] === "'" || text[0] === '"'
+  const end = text[text.length - 1] === "'" || text[text.length - 1] === '"'
+
+  return start || end
 }
