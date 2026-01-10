@@ -407,7 +407,7 @@ const isInWindow = async (before, after) => {
   const rules = settings.rules.sort((left, right) => right.threshold - left.threshold)
 
   for (const rule of rules) {
-    if (diff < rule.threshold) continue
+    if (diff < rule.threshold * MS_PER_S) continue
 
     console.warn(`[${after.guild.name}]: edit from ${after.author.displayName} was outside allowed window`)
     await after.delete()
@@ -416,15 +416,14 @@ const isInWindow = async (before, after) => {
     if (!channel) return console.error('expected channel to be defined')
 
     const ping = rule.roles.map(id => `<@&${id}>`).join(' ')
+    const backup = '[FIXME(kajo): ;;toromi only has info for messages posted after init]'
+
+    const timestamp = Math.floor(before.createdTimestamp / MS_PER_S)
 
     await channel.send(
       `
-      ${ping}, ${after.author.displayName} edited a message that was posted ${Math.round(
-        diff / MS_PER_S
-      )}s ago (outside threshold).
-      before: "${
-        before.content ?? '[FIXME(kajo): currently ;;toromi only has partial info to messages posted before init]'
-      }"
+      ${ping}, ${after.author.displayName} edited a message that was posted <t:${timestamp}:R>.
+      before: "${before.content ?? backup}"
       after: "${after.content}"
       `
     )
