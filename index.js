@@ -380,7 +380,38 @@ client.on('messageDelete', async message => {
   }
 })
 
+/**
+ * @param {Discord.OmitPartialGroupDMChannel<Discord.Message<boolean> | Discord.PartialMessage<boolean>>} before - the message before the edit
+ * @param {Discord.OmitPartialGroupDMChannel<Discord.Message<boolean>>} after - the message after the edit
+ * @returns {Promise<boolean>} Whether the edit occured within the allowed edit-window
+ */
+const isInWindow = async (before, after) => {
+  const MS_PER_S = 1000
+
+  // NB: only in supported guilds
+  if (!config.editWindow.guilds.includes(after.guildId)) return true
+  const diff = after.editedTimestamp - before.createdTimestamp // ms
+
+  if (diff >= config.editWindow.threshold * MS_PER_S) {
+    console.warn(`[${after.guild.name}]: edit from ${after.author.displayName} was outside allowed window`)
+    await after.delete()
+
+    const channel = await client.channels.fetch(config.editWindow.channelId)
+    if (!channel) throw new Error('expected channel to be defined')
+
+    await channel.send(
+      `edit from ${after.author.displayName} fell outside allowed edit window (${config.editWindow.threshold}s)`
+    )
+    return false
+  }
+
+  return true
+}
+
 client.on('messageUpdate', async (oldMessage, newMessage) => {
+  const inWindow = await isInWindow(oldMessage, newMessage)
+  if (!inWindow) return
+
   const guildId = newMessage.guildId
   const deleteGuardData = getDeleteGuardData(guildId)
 
