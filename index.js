@@ -11,11 +11,12 @@ const client = new Discord.Client({
     Discord.IntentsBitField.Flags.GuildPresences,
     Discord.IntentsBitField.Flags.GuildMembers,
     Discord.GatewayIntentBits.GuildMessageReactions
+  ],
+  partials: [
+    Discord.Partials.Message
+    // Partials.Channel,
+    // Partials.Reaction,
   ]
-  // partials: [
-  //   Partials.Message,
-  //   Partials.Channel,
-  //   Partials.Reaction]
 })
 const fs = require('fs')
 const fsPromises = require('fs/promises')
@@ -26,6 +27,7 @@ const { YtDlpPlugin } = require('@distube/yt-dlp')
 const Util = require('./classes/utils.js')
 const { setupAutoReact } = require('./classes/autoEmoteUtils')
 const { getDeleteGuardData } = require('./classes/deleteGuardUtils')
+const { getEditWindowData } = require('./classes/editWindowUtils.js')
 
 client.config = require('./config.json')
 const { TOKEN } = process.env
@@ -313,6 +315,15 @@ client.on('messageCreate', async message => {
 
 // deleteGuard
 client.on('messageDelete', async message => {
+  if (message.partial) {
+    // FIXME(kajo): we don't handle partials at all lol
+    return console.warn(
+      `[${message.guild.name}]: ${
+        message.author?.displayName ?? 'someone'
+      } deleted a message, but it was a partial. ignored.`
+    )
+  }
+
   const guildId = message.guildId
   const deleteGuardData = getDeleteGuardData(guildId)
 
@@ -379,7 +390,61 @@ client.on('messageDelete', async message => {
   }
 })
 
+/**
+ * @param {Discord.OmitPartialGroupDMChannel<Discord.Message<boolean> | Discord.PartialMessage<boolean>>} before - the message before the edit
+ * @param {Discord.OmitPartialGroupDMChannel<Discord.Message<boolean>>} after - the message after the edit
+ * @returns {Promise<boolean>} Whether the edit occured within the allowed edit-window
+ */
+const isInWindow = async (before, after) => {
+  const MS_PER_S = 1000
+  if (!after.guildId) return false
+
+  const settings = getEditWindowData(after.guildId)
+  if (!settings.enabled) return true
+
+  const diff = after.editedTimestamp - before.createdTimestamp // ms
+
+  const rules = settings.rules.sort((left, right) => right.threshold - left.threshold)
+
+  for (const rule of rules) {
+    if (diff < rule.threshold * MS_PER_S) continue
+
+    console.warn(`[${after.guild.name}]: edit from ${after.author.displayName} was outside allowed window`)
+    await after.delete()
+
+    const channel = await client.channels.fetch(settings.channelId)
+    if (!channel) return console.error('expected channel to be defined')
+
+    const ping = rule.roles.map(id => `<@&${id}>`).join(' ')
+    const backup = '[FIXME(kajo): ;;toromi only has info for messages posted after init]'
+
+    const timestamp = Math.floor(before.createdTimestamp / MS_PER_S)
+
+    await channel.send(
+      `
+      ${ping}, ${after.author.displayName} edited a message that was posted <t:${timestamp}:R>.
+      before: "${before.content ?? backup}"
+      after: "${after.content}"
+      `
+    )
+
+    return false
+  }
+
+  return true
+}
+
 client.on('messageUpdate', async (oldMessage, newMessage) => {
+  const inWindow = await isInWindow(oldMessage, newMessage)
+  if (!inWindow) return
+
+  if (oldMessage.partial) {
+    // FIXME(kajo): we don't handle partials at all lol
+    return console.warn(
+      `[${newMessage.guild.name}]: ${newMessage.author.displayName} edited a message, but it was a partial. ignored.`
+    )
+  }
+
   const guildId = newMessage.guildId
   const deleteGuardData = getDeleteGuardData(guildId)
 
