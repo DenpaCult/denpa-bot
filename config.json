@@ -32,10 +32,5 @@
     "expireTime": 20,
     "channelId": "channel_id",
     "messages": []
-  },
-  "editWindow": {
-    "threshold": 3600,
-    "channelId": "channel_id",
-    "guilds": ["guild_id"]
   }
 }

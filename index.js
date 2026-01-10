@@ -27,6 +27,7 @@ const { YtDlpPlugin } = require('@distube/yt-dlp')
 const Util = require('./classes/utils.js')
 const { setupAutoReact } = require('./classes/autoEmoteUtils')
 const { getDeleteGuardData } = require('./classes/deleteGuardUtils')
+const { getEditWindowData } = require('./classes/editWindowUtils.js')
 
 client.config = require('./config.json')
 const { TOKEN } = process.env
@@ -314,6 +315,15 @@ client.on('messageCreate', async message => {
 
 // deleteGuard
 client.on('messageDelete', async message => {
+  if (message.partial) {
+    // FIXME(kajo): we don't handle partials at all lol
+    return console.warn(
+      `[${message.guild.name}]: ${
+        message.author?.displayName ?? 'someone'
+      } deleted a message, but it was a partial. ignored.`
+    )
+  }
+
   const guildId = message.guildId
   const deleteGuardData = getDeleteGuardData(guildId)
 
@@ -387,21 +397,38 @@ client.on('messageDelete', async message => {
  */
 const isInWindow = async (before, after) => {
   const MS_PER_S = 1000
+  if (!after.guildId) return false
 
-  // NB: only in supported guilds
-  if (!config.editWindow.guilds.includes(after.guildId)) return true
+  const settings = getEditWindowData(after.guildId)
+  if (!settings.enabled) return true
+
   const diff = after.editedTimestamp - before.createdTimestamp // ms
 
-  if (diff >= config.editWindow.threshold * MS_PER_S) {
+  const rules = settings.rules.sort((left, right) => right.threshold - left.threshold)
+
+  for (const rule of rules) {
+    if (diff < rule.threshold) continue
+
     console.warn(`[${after.guild.name}]: edit from ${after.author.displayName} was outside allowed window`)
     await after.delete()
 
-    const channel = await client.channels.fetch(config.editWindow.channelId)
-    if (!channel) throw new Error('expected channel to be defined')
+    const channel = await client.channels.fetch(settings.channelId)
+    if (!channel) return console.error('expected channel to be defined')
+
+    const ping = rule.roles.map(id => `<@&${id}>`).join(' ')
 
     await channel.send(
-      `edit from ${after.author.displayName} fell outside allowed edit window (${config.editWindow.threshold}s)`
+      `
+      ${ping}, ${after.author.displayName} edited a message that was posted ${Math.round(
+        diff / MS_PER_S
+      )}s ago (outside threshold).
+      before: "${
+        before.content ?? '[FIXME(kajo): currently ;;toromi only has partial info to messages posted before init]'
+      }"
+      after: "${after.content}"
+      `
     )
+
     return false
   }
 
@@ -411,6 +438,13 @@ const isInWindow = async (before, after) => {
 client.on('messageUpdate', async (oldMessage, newMessage) => {
   const inWindow = await isInWindow(oldMessage, newMessage)
   if (!inWindow) return
+
+  if (oldMessage.partial) {
+    // FIXME(kajo): we don't handle partials at all lol
+    return console.warn(
+      `[${newMessage.guild.name}]: ${newMessage.author.displayName} edited a message, but it was a partial. ignored.`
+    )
+  }
 
   const guildId = newMessage.guildId
   const deleteGuardData = getDeleteGuardData(guildId)
