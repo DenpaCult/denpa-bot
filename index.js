@@ -410,8 +410,17 @@ const isInWindow = async (before, after) => {
     if (diff < rule.threshold * MS_PER_S) continue
     console.warn(`[${after.guild.name}]: ${after.author.username}'s edit was outside ${rule.threshold}s window`)
 
-    console.warn(`[${after.guild.name}]: edit from ${after.author.displayName} was outside allowed window`)
-    await after.delete()
+    if (after.member) {
+      const roles = after.member.roles.cache
+      const isExempt = roles.some(role => settings.exempt.includes(role.id))
+      console.warn(
+        `[${after.guild.name}]: ${after.author.username}${
+          isExempt ? "'s message will NOT be deleted" : "'s message will be deleted"
+        }`
+      )
+
+      if (!isExempt) await after.delete()
+    }
 
     const channel = await client.channels.fetch(settings.channelId)
     if (!channel) return console.error('expected channel to be defined')

@@ -6,6 +6,7 @@ const fs = require('fs')
  * @property {boolean} enabled - whether an edit window is enabled for this particular guild
  * @property {EditWindowRule[]} rules - moderator configured thresholds and related pings
  * @property {string} channelId - the guild text channel ;;toromi will report to
+ * @property {string[]} exempt - roleIds that marks a user as exempt from having their message dleeted
  */
 
 /**
@@ -28,19 +29,19 @@ const getPath = guildId => {
  */
 const getEditWindowData = guildId => {
   /** @type{EditWindowConfiguration} */
-  let data = {
+  const defaults = {
     enabled: false,
     rules: [],
-    channelId: ''
+    channelId: '',
+    exempt: []
   }
 
   try {
     const file = fs.readFileSync(getPath(guildId), { encoding: 'utf-8' })
-
-    data = JSON.parse(file)
-  } catch (e) {} // default handled already
-
-  return data
+    return { ...defaults, ...JSON.parse(file) }
+  } catch {
+    return defaults
+  }
 }
 
 /**

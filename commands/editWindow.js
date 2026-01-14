@@ -39,6 +39,44 @@ module.exports = {
         break
       }
 
+      case 'exempt': {
+        const subCommand = args[1]
+
+        switch (subCommand) {
+          case 'add': {
+            const roles = handleQuotes(args.slice(2))
+
+            const found = message.guild.roles.cache.filter(role => roles.includes(role.name))
+            const ids = found.map(role => role.id)
+
+            if (ids.length !== roles.length) {
+              return await message.channel.send(`failed to find every role in list: ${roles.join(', ')} `)
+            }
+
+            if (ids.length === 0) {
+              return await message.channel.send('no roles provided')
+            }
+
+            const exempt = [...new Set(settings.exempt.concat(ids))] // dedup TODO(kajo): communicate this to the user?
+            saveEditWindowData(guildId, { ...settings, exempt })
+            await message.channel.send(
+              `users with role(s) ${roles.join(', ')} have been exempted from message deletion`
+            )
+            break
+          }
+
+          case 'remove': {
+            await message.channel.send('TODO(kajo): implement lol')
+            break
+          }
+
+          default:
+            await message.channel.send('proper usage is ;;windowedit exempt {add, remove} <role> <role> ... <role>')
+        }
+
+        break
+      }
+
       case 'channel': {
         const subCommand = args[1]
         const channelId = args[2]
@@ -107,7 +145,7 @@ module.exports = {
 
       default:
         await message.channel.send(
-          'TODO(kajo): write documentation. go annoy kajo about how this works for now i guess.'
+          'TODO(kajo): better help. available is ;;editwindow {rule, channel, exempt, enable, disable}'
         )
     }
   }
@@ -136,9 +174,6 @@ function handleQuotes (args) {
 
     i = i + 1 + end // skip to next word after endquote
   }
-
-  console.debug('args', args)
-  console.debug('tokens', tokens)
 
   return tokens
 }
