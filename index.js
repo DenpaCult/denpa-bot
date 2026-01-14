@@ -408,24 +408,43 @@ const isInWindow = async (before, after) => {
 
   for (const rule of rules) {
     if (diff < rule.threshold * MS_PER_S) continue
+    console.warn(`[${after.guild.name}]: ${after.author.username}'s edit was outside ${rule.threshold}s window`)
 
-    console.warn(`[${after.guild.name}]: edit from ${after.author.displayName} was outside allowed window`)
-    await after.delete()
+    if (after.member) {
+      const roles = after.member.roles.cache
+      const isExempt = roles.some(role => settings.exempt.includes(role.id))
+      console.warn(
+        `[${after.guild.name}]: ${after.author.username}${
+          isExempt ? "'s message will NOT be deleted" : "'s message will be deleted"
+        }`
+      )
+
+      if (!isExempt) await after.delete()
+    }
 
     const channel = await client.channels.fetch(settings.channelId)
     if (!channel) return console.error('expected channel to be defined')
 
     const ping = rule.roles.map(id => `<@&${id}>`).join(' ')
-    const backup = '[FIXME(kajo): ;;toromi only has info for messages posted after init]'
+    const backup = 'FIXME(kajo): ;;toromi only has info for messages posted after init'
 
     const timestamp = Math.floor(before.createdTimestamp / MS_PER_S)
 
+    const beforeSanitized = before.content?.replace(/[\\`$]/g, '\\$&') ?? backup
+    const afterSanitized = after.content.replace(/[\\`$]/g, '\\$&')
+
     await channel.send(
       `
-      ${ping}, ${after.author.displayName} edited a message that was posted <t:${timestamp}:R>.
-      before: "${before.content ?? backup}"
-      after: "${after.content}"
-      `
+${ping} ${after.author.username} edited a message that was posted <t:${timestamp}:R>.
+### Before 
+\`\`\`
+${beforeSanitized}
+\`\`\`
+### After
+\`\`\`
+${afterSanitized}
+\`\`\`
+      `.trim()
     )
 
     return false
