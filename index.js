@@ -426,27 +426,16 @@ const isInWindow = async (before, after) => {
     if (!channel) return console.error('expected channel to be defined')
 
     const ping = rule.roles.map(id => `<@&${id}>`).join(' ')
-    const backup = 'FIXME(kajo): ;;toromi only has info for messages posted after init'
-
     const timestamp = Math.floor(before.createdTimestamp / MS_PER_S)
 
-    const beforeSanitized = before.content?.replace(/[\\`$]/g, '\\$&') ?? backup
+    const beforeSanitized = before.content?.replace(/[\\`$]/g, '\\$&')
     const afterSanitized = after.content.replace(/[\\`$]/g, '\\$&')
 
-    await channel.send(
-      `
-${ping} ${after.author.username} edited a message that was posted <t:${timestamp}:R>.
-### Before 
-\`\`\`
-${beforeSanitized}
-\`\`\`
-### After
-\`\`\`
-${afterSanitized}
-\`\`\`
-      `.trim()
-    )
+    let message = `${ping} <@${after.author.id}> (${after.author.username}) edited [a message](${after.url}) that was posted <t:${timestamp}:R>.\n`
+    if (beforeSanitized) message += `### Before\n\`\`\`\n${beforeSanitized}\n\`\`\`\n`
+    message += `### After\n\`\`\`${afterSanitized}\n\`\`\``
 
+    await channel.send(message.trim())
     return false
   }
 
