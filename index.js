@@ -68,12 +68,6 @@ client.on('ready', () => {
   client.user.setActivity('Praise be to ;;toromi')
 })
 
-// lazy (tea) auto role
-client.on('guildMemberAdd', member => {
-  member.roles.add(member.guild.roles.cache.find(i => i.name === config.defaultrole))
-  console.log(`auto role ${config.defaultrole} added to ${member.user.username}`)
-})
-
 // https://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
 const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/g
 
